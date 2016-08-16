@@ -51,6 +51,7 @@ public final class NIOReactor {
 		private long reactCount;
 		private final ReactorBufferPool myBufferPool;
 
+		//每个reactor是一个线程，每个里面都有一个selector
 		private RWThread() throws IOException {
 			this.selector = Selector.open();
 			myBufferPool = new ReactorBufferPool(shearedBufferPool, this, 1000);

@@ -35,7 +35,9 @@ public final class NIOAcceptor extends Thread {
 		this.serverChannel.configureBlocking(false);
 		/** 设置TCP属性 */
 		serverChannel.setOption(StandardSocketOptions.SO_REUSEADDR, true);
-		serverChannel.setOption(StandardSocketOptions.SO_RCVBUF, 1024 * 16 * 2);
+		//linux kernel 里面的tcp实现中接收到的数据缓冲区的buffer大小,跟应用层无关
+		//根据并发设置,过大应用层处理不过来,过小并发大时客户端连接不上
+		serverChannel.setOption(StandardSocketOptions.SO_RCVBUF, 1024 * 16 * 2);  
 		// backlog=100
 		serverChannel.bind(new InetSocketAddress(bindIp, port), 100);
 		this.serverChannel.register(selector, SelectionKey.OP_ACCEPT);
@@ -55,16 +57,21 @@ public final class NIOAcceptor extends Thread {
 	public void run() {
 		final Selector selector = this.selector;
 		for (;;) {
+			//单线程,循环进行select
 			++acceptCount;
 			try {
+				//阻塞的方法，当有事件到来或者超时时会触发
+				//返回一个int，代表几个channel被select到了
 				selector.select(1000L);
 				Set<SelectionKey> keys = selector.selectedKeys();
 				try {
+					//key里面可以获取到channel
+					//key要cancel或clear掉，不然下次还会被select到
 					for (SelectionKey key : keys) {
 						if (key.isValid() && key.isAcceptable()) {
-							accept();
+							accept();   //selector只被accept事件注册过，所以只需要处理accept事件
 						} else {
-							key.cancel();
+							key.cancel(); 
 						}
 					}
 				} finally {
@@ -82,6 +89,8 @@ public final class NIOAcceptor extends Thread {
 	private void accept() {
 		SocketChannel channel = null;
 		try {
+			//accept到来之后，因为只有一个channel，因此可以直接取
+			//返回SocketChannel,代表客户端channel
 			channel = serverChannel.accept();
 			channel.configureBlocking(false);
 			Connection c = factory.make(channel);

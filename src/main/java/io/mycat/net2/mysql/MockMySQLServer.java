@@ -35,7 +35,7 @@ public class MockMySQLServer {
 
     static {
         mockDBNodes = new HashMap<>();
-        DBHostConfig config = new DBHostConfig("host1", "127.0.0.1", 3306, "", "root", "root");
+        DBHostConfig config = new DBHostConfig("host1", "139.129.20.25", 3306, "", "root", "");
         config.setMaxCon(10);
         PhysicalDatasource dbSource = new MySQLDataSource(config, false);
         PhysicalDBPool dbPool = new PhysicalDBPool("host1", new PhysicalDatasource[] { dbSource }, new HashMap<>());
@@ -52,6 +52,7 @@ public class MockMySQLServer {
         SharedBufferPool sharedPool = new SharedBufferPool(1024 * 1024 * 100, 1024);
         new NetSystem(sharedPool, businessExecutor, timerExecutor);
         // Reactor pool
+        //5个reactor
         NIOReactorPool reactorPool = new NIOReactorPool("Reactor Pool", 5, sharedPool);
         NIOConnector connector = new NIOConnector("NIOConnector", reactorPool);
         connector.start();
